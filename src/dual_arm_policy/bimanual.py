@@ -10,7 +10,7 @@ from diffusion_policy import DiffusionPolicy
 
 class ArmInterface(Node):
     def __init__(self, arm_name:str):
-        super.__init__(f"{arm_name}_interface")
+        super().__init__(f"{arm_name}_interface")
         self.arm_name = arm_name
         self.namespace = f"/{arm_name}_arm"
         self.fk_client = self.create_client(GetPositionFK, f"{self.namespace}/compute_fk")

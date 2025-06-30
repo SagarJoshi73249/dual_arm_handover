@@ -16,6 +16,6 @@ def generate_launch_description():
         launch_arguments={'arm_name': 'right_arm'}.items()
     )
     
-    # Could add rviz, static transforms, etc.
+    # Could add other nodes like rviz, static transforms, etc.
     
     return LaunchDescription([left_arm, right_arm])
