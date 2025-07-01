@@ -2,10 +2,11 @@ import rclpy
 import numpy as np
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
+from std_msgs.msg import Float32
 from geometry_msgs.msg import Pose
 from moveit_msgs.srv import GetPositionFK, GetPositionIK
 from some_pkg.control_gripper import GripperController
-from some_pkg.camera_interface import CameraReader 
+import pyrealsense2 as rs 
 from diffusion_policy import DiffusionPolicy 
 
 class ArmInterface(Node):
@@ -17,10 +18,13 @@ class ArmInterface(Node):
         self.ik_client = self.create_client(GetPositionIK, f"{self.namespace}/compute_ik")
         self.joint_state = None
         self.force_data = None
+        self.create_subscription(JointState, "/joint_states", self._joint_callback, 10)
+        # for tactile you'd subscribe like
+        self.create_subscription(Float32, f"{self.namespace}/tactile/finger_0", self._tactile_callback, 10)
 
     def _joint_callback(self, msg):
         self.joint_state = msg
-        
+    
     #Setup other subscribes like tactile and use to get data for tactile sensors
 
     def get_fk(self) -> Pose:
@@ -37,6 +41,13 @@ class ArmInterface(Node):
         #return joint_states
         pass
 
+class GraspMonitor(Node):
+    def __init__(self):
+        super().__init__("grasp_monitor")
+        # subscribe to /x_arm/tactile/finger_* topics
+        # run simple slip/contact heuristics
+        # publish modified gripper scalar if needed
+    
 class DiffusionExecutor:
     def __init__(self):
         self.left_arm = ArmInterface("left")
@@ -63,8 +74,8 @@ class DiffusionExecutor:
         right_image = np.asanyarray(right_frames.get_data())
         left_pose = self.left_arm.get_fk()
         right_pose = self.right_arm.get_fk()
-        tactile_left = self.latest_tactile_value_left #subscriber
-        tactile_right = self.latest_tactile_value_right #subscriber
+        tactile_left = self.left_arm.tactile_data  
+        tactile_right = self.right_arm.tactile_data   #get tactile observation from subscriber
         
         left_gripper_pos = self.left_gripper.get_state()
         right_gripper_pos = self.right_gripper.get_state()
